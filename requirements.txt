@@ -1,7 +1,8 @@
 Django==1.11.5
+django-appconf==1.0.2
 django-choices==1.6.0
 django-cors-headers==2.1.0
-django-filter==1.0.4
+django-extra-fields==0.9
 djangorestframework==3.6.4
 djangorestframework-jwt==1.11.0
 olefile==0.44

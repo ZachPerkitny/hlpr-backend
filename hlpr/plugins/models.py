@@ -1,31 +1,25 @@
-import os
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from django.template.defaultfilters import slugify
 from .choices import CategoryChoices, GameChoices, ModChoices
 from .fields import VersionNumberField, VersionNumber
-
-
-def version_default():
-    """
-    Default wrapper for version
-    """
-    return VersionNumber(1,)
+from .validators import validate_file_extension
 
 
 class Plugin(models.Model):
     name = models.CharField(max_length=64, unique=True)
     slug = models.SlugField(editable=False, unique=True)
+    summary = models.TextField(max_length=140)
     description = models.TextField(max_length=4096)
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='plugin_author'
+        related_name='plugins'
     )
     collaborators = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
-        related_name='plugin_collaborator',
+        related_name='+',
         blank=True
     )
     created = models.DateTimeField(editable=False)
@@ -39,7 +33,7 @@ class Plugin(models.Model):
     game = models.CharField(
         max_length=16,
         choices=GameChoices.choices,
-        default=GameChoices.any
+        default=GameChoices.any_game
     )
     mod = models.CharField(
         max_length=12,
@@ -56,13 +50,23 @@ class Plugin(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.id:
-            # generate slug on creation
-            self.slug = slugify(self.name)
             # set created time
             self.created = timezone.now()
+        # generate new slug on creation/update
+        self.slug = slugify(self.name)
         # update last_updated time
         self.last_updated = timezone.now()
         return super(Plugin, self).save(*args, **kwargs)
+
+
+def version_default():
+    # Default wrapper for version
+    return VersionNumber(1,)
+
+
+def file_directory_path(instance, filename):
+    # File will be uploaded to MEDIA_ROOT/plugins/<plugin_name>/<version>/<filename>
+    return 'plugins/%s/%s/%s' % (instance.plugin.slug, instance.version, filename)
 
 
 class Version(models.Model):
@@ -72,26 +76,15 @@ class Version(models.Model):
         on_delete=models.CASCADE,
         related_name='versions'
     )
+    archive = models.FileField(
+        upload_to=file_directory_path,
+        validators=[validate_file_extension]
+    )
 
     class Meta:
+        unique_together = ('version', 'plugin')
         verbose_name = 'Version'
         verbose_name_plural = 'Versions'
 
     def __str__(self):
         return str(self.version)
-
-
-class File(models.Model):
-    file = models.FileField()
-    version = models.ForeignKey(
-        Version,
-        on_delete=models.CASCADE,
-        related_name='files'
-    )
-
-    class Meta:
-        verbose_name = 'File'
-        verbose_name_plural = 'Files'
-
-    def __str__(self):
-        return os.path.basename(self.file.name)

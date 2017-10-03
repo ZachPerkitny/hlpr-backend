@@ -32,7 +32,7 @@ class GameChoices(DjangoChoices):
 
     age_of_chivalry = ChoiceItem('age_of_chivalry', 'Age of Chivalry')
     alien_swarm = ChoiceItem('alien_swarm', 'Alien Swarm')
-    any = ChoiceItem('any', 'Any')
+    any_game = ChoiceItem('any', 'Any')
     battlegrounds_2 = ChoiceItem('battlegrounds_2', 'Battlegrounds 2')
     counter_strike_go = ChoiceItem('csgo', 'Counter-Strike: GO')
     counter_strike_source = ChoiceItem('css', 'Counter-Strike: Source')

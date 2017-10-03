@@ -23,11 +23,7 @@ class VersionNumber(object):
         Returns a string representation of a VersionNumber object in the form:
         'major.minor.patch.build'
         """
-        ei = 0
-        for i, v in enumerate(self.version):
-            if v == 0:
-                ei = i
-                break
+        ei = 3 if self.version[3] else 2
         return '.'.join([str(x) for x in self.version[:ei + 1]])
 
     def __repr__(self):
@@ -45,21 +41,26 @@ class VersionNumberField(models.Field):
     def get_internal_type(self):
         return 'IntegerField'
 
+    def from_db_value(self, value, expression, connection, context):
+        return self.to_python(value)
+
     def to_python(self, value):
         """
-        Converts a tuple or integer into a VersionNumber
+        Converts a tuple, string or integer into a VersionNumber.
         """
         if isinstance(value, VersionNumber) or value is None:
             return value
         if isinstance(value, tuple):
             return VersionNumber(*value)
+        if isinstance(value, str):
+            return VersionNumber(*value.split('.'))
         packed = [b for b in struct.pack('>I', value + 2**31)]
         return VersionNumber(*packed)
 
     def get_prep_value(self, value):
         """
         Converts a VersionNumber object or a tuple to its signed
-        integer representation.
+        integer representation (prepared for use as a query parameter).
         """
         if isinstance(value, VersionNumber):
             return int(value)
@@ -67,10 +68,5 @@ class VersionNumberField(models.Field):
             return int(VersionNumber(*value))
         if isinstance(value, int):
             return value
-
-    def value_to_string(self, obj):
-        """
-        Converts obj to the signed integer representation of Version Number
-        """
-        value = self.value_from_object(obj)
-        return self.get_prep_value(value)
+        if isinstance(value, str):
+            return int(VersionNumber(*value.split('.')))
