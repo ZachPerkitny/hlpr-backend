@@ -32,8 +32,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
+    'haystack',
+    'drf_haystack',
     'hlpr.user',
-    'hlpr.plugins'
+    'hlpr.plugins',
+    'hlpr.search'
 ]
 
 MIDDLEWARE = [
@@ -116,6 +119,14 @@ JWT_AUTH = {
     'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(days=14),
     'JWT_PAYLOAD_HANDLER': 'hlpr.user.jwt.jwt_payload_handler',
     'JWT_RESPONSE_PAYLOAD_HANDLER': 'hlpr.user.jwt.jwt_response_payload_handler'
+}
+
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',
+        'URL': 'http://127.0.0.1:9200/',
+        'INDEX_NAME': 'haystack'
+    },
 }
 
 # Internationalization

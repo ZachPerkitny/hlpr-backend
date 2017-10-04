@@ -1,6 +1,5 @@
-from rest_framework import serializers, fields
+from rest_framework import serializers
 from hlpr.user.serializers import UserListSerializer
-from .choices import CategoryChoices
 from .models import Plugin, Version
 
 
@@ -8,14 +7,14 @@ class VersionListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Version
-        fields = ('version', 'archive',)
+        fields = ('version', 'id',)
 
 
 class VersionDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Version
-        fields = ('version', 'archive',)
+        fields = ('version', 'archive', 'id',)
 
 
 class PluginListSerializer(serializers.ModelSerializer):

@@ -1,5 +1,6 @@
+from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
-from drf_extra_fields.fields import Base64ImageField
+from .gravatar import get_gravatar_url
 from .models import User
 
 
@@ -7,10 +8,19 @@ class UserCreateSerializer(serializers.ModelSerializer):
     """
     User Registration Serializer
     """
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(write_only=True)
+
     class Meta:
         model = User
         fields = ('email', 'username', 'password',)
-        extra_kwargs = {'password': {'write_only': True}}
+
+    def validate_password(self, value):
+        """
+        Ensures valid password (min length, etc, see settings)
+        """
+        validate_password(value)
+        return value
 
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
@@ -20,22 +30,30 @@ class UserListSerializer(serializers.ModelSerializer):
     """
     User List Serializer
     """
+    avatar = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ('username', 'id',)
+        fields = ('username', 'id', 'avatar',)
+
+    def get_avatar(self, obj):
+        return get_gravatar_url(obj.email)
 
 
 class UserDetailSerializer(serializers.ModelSerializer):
     """
     User Detail Serializer - username, email and id cannot be updated.
     """
-    avatar = Base64ImageField(required=True)
+    avatar = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = ('username', 'email', 'id', 'first_name', 'last_name', 'alliedmodders', 'avatar',
                   'github', 'twitter',)
         read_only_fields = ('username', 'email', 'id',)
+
+    def get_avatar(self, obj):
+        return get_gravatar_url(obj.email)
 
 
 class ChangePasswordSerializer(serializers.Serializer):
